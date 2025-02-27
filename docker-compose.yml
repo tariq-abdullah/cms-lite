@@ -1,0 +1,51 @@
+#--------------------------------------------------------------------------#
+#                          ${PROJECT_NAME}                                #
+#--------------------------------------------------------------------------#
+version: "3.8"
+
+networks:
+    project-network:
+        driver: bridge
+
+volumes:
+    mariadb_data:
+
+services:
+    db:
+        image: bitnami/mariadb:latest
+        container_name: ${PROJECT_NAME}_db
+        restart: always
+        environment:
+            ALLOW_EMPTY_PASSWORD: "yes"
+            MARIADB_USER: bn_myapp
+            MARIADB_DATABASE: bitnami_myapp
+        networks:
+            - project-network
+        volumes:
+            - ./database/mysql:/bitnami/mariadb
+
+    app:
+          image: php:8.2-apache
+          container_name: ${PROJECT_NAME}_app
+          restart: always
+          ports:
+              - "80:80"  # Match the Nginx default port
+          environment:
+              DB_HOST: db
+             
+          networks:
+              - project-network
+          volumes:
+              - ./:/var/www/html 
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin:latest
+        container_name: ${PROJECT_NAME}_phpmyadmin
+        restart: always
+        environment:
+            PMA_HOST: db
+            PMA_PORT: 3306
+        ports:
+            - "81:80"
+        networks:
+            - project-network
